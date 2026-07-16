@@ -54,7 +54,7 @@ pipeline {
 
         stage('Update Deployment Image') {
             steps {
-                withCredentials([string(credentialsId: 'GITHUB', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'GITHUB', usernameVariable: 'GIT_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                     sh '''
                         #!/bin/bash
                         set -e
