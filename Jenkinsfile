@@ -14,42 +14,45 @@ pipeline {
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Docker Login') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'Docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh '''
-                          echo "$DOCKER_PASSWORD"
-                          docker login -u ${DOCKER_USERNAME} --password-stdin
-                          '''
-                    }
-                }
-            }
-        }
-
-        stage('Build Docker') {
-            steps {
-                script {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'Docker',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
                     sh '''
-                        echo 'Build Docker Image'
-                        docker build -t fariyajs/go-app:${BUILD_NUMBER} .
+                        echo "$DOCKER_PASSWORD" | docker login \
+                            --username "$DOCKER_USERNAME" \
+                            --password-stdin
+
+                        docker info
                     '''
                 }
             }
         }
 
-        stage('Push the artifacts') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    sh '''
-                        echo 'Push to Repo'
-                        docker push fariyajs/go-app:${BUILD_NUMBER}
-                    '''
-                }
+                sh '''
+                    echo "Building Docker Image..."
+                    docker build -t fariyajs/go-app:${BUILD_NUMBER} .
+                '''
             }
         }
 
-        stage('Checkout K8S manifest SCM') {
+        stage('Push Docker Image') {
+            steps {
+                sh '''
+                    echo "Pushing Docker Image..."
+                    docker push fariyajs/go-app:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('Checkout K8S Manifest SCM') {
             steps {
                 git url: 'https://github.com/Mfariyaj/Go-project.git', branch: 'main', credentialsId: 'GITHUB'
             }
@@ -67,21 +70,20 @@ pipeline {
                         MANIFEST_DIR="Kubernetes-manifest"
                         FILE="Deployment.yaml"
 
-                        # Clone (shallow)
+                        # Clone repository
                         rm -rf "$WORKDIR"
                         git clone --depth 1 "$REPO_URL" "$WORKDIR"
 
                         cd "$WORKDIR/$MANIFEST_DIR"
 
-                        # Set git user for commit
+                        # Configure Git
                         git config user.email "fariyajshaikh86@gmail.com"
                         git config user.name "Mfariyaj"
 
-                        # New image
+                        # Update image
                         NEW_IMAGE="fariyajs/go-app:${BUILD_NUMBER}"
                         echo "Updating image to: $NEW_IMAGE"
 
-                        # Replace image line
                         if [ -f "$FILE" ]; then
                             sed -i "0,/^[[:space:]]*image:/s|^[[:space:]]*image:.*|image: ${NEW_IMAGE}|" "$FILE"
                         else
@@ -89,22 +91,35 @@ pipeline {
                             exit 1
                         fi
 
-                        echo "File after update:"
+                        echo "Updated Deployment.yaml:"
                         cat "$FILE"
-                        echo "----"
 
-                        # Commit only if changes
                         git add "$FILE"
-                        if git diff --quiet --cached; then
-                            echo "No changes to commit"
+
+                        if git diff --cached --quiet; then
+                            echo "No changes to commit."
                         else
                             git commit -m "Update deployment image to ${BUILD_NUMBER}"
                             git push origin HEAD:main
-                            echo "Pushed changes to main"
+                            echo "Changes pushed successfully."
                         fi
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline execution completed."
+        }
+
+        success {
+            echo "Pipeline completed successfully."
+        }
+
+        failure {
+            echo "Pipeline failed."
         }
     }
 }
