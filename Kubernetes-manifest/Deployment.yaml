@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: go-app 
-        image: fariyajs/go-app:53
+        image: fariyajs/go-app:55
         ports:
         - containerPort: 8080
         imagePullPolicy: Always       # ← For CI/CD auto-updates
