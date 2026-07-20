@@ -80,9 +80,9 @@ pipeline {
                             </table>
                             
 
-                            <p style="font-size:16px;">Please approve or deny the deployment:</p>
+                            <p style="font-size:16px;">Please allow or deny the deployment:</p>
                             <p>
-                                <a href="${env.BUILD_URL}input/" style="background-color:#28a745; color:white; padding:12px 24px; text-decoration:none; border-radius:5px; font-weight:bold; margin-right:10px;">✅ Proceed</a>
+                                <a href="${env.BUILD_URL}input/" style="background-color:#28a745; color:white; padding:12px 24px; text-decoration:none; border-radius:5px; font-weight:bold; margin-right:10px;">✅ Allow</a>
                                 <a href="${env.BUILD_URL}input/" style="background-color:#dc3545; color:white; padding:12px 24px; text-decoration:none; border-radius:5px; font-weight:bold;">❌ Deny</a>
                             </p>
                             
