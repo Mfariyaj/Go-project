@@ -93,7 +93,7 @@ pipeline {
                         </html>
                     """
                 )
-                input message: 'Do you approve deployment to production?', ok: 'Deploy'
+                input message: 'Do you approve deployment to production?', ok: 'Allow'
             }
         }
 
